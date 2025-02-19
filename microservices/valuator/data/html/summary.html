@@ -1,8 +1,10 @@
 <!-- summary.html -->
-{{define "summary"}}
+{{define "content"}}
 <h2>Результаты обработки</h2>
 <p>ID текста: {{.TextID}}</p>
 <p>Оценка содержания (rank): {{.Rank}}</p>
 <p>Схожесть с другими текстами: {{if eq .Similarity 1}}Найден дубликат{{else}}Дубликатов не найдено{{end}}</p>
-<a href="/">Вернуться на главную</a>
+<a href="/list">
+    <button class="btn">Список</button>
+</a>
 {{end}}

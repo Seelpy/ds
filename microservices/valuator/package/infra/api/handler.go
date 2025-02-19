@@ -11,20 +11,21 @@ import (
 type Handler struct {
 	textService       service.TextService
 	statisticsService query.StatisticsQueryService
-	templates         *template.Template
+	textQueryService  query.TextQueryService
 }
 
-func NewHandler(ts service.TextService, ss query.StatisticsQueryService) *Handler {
-	templates := template.Must(template.ParseFiles("./data/html/index.html", "./data/html/input.html", "./data/html/summary.html", "./data/html/baseSummary.html"))
+func NewHandler(textService service.TextService, statisticsQueryService query.StatisticsQueryService, textQueryService query.TextQueryService) *Handler {
+
 	return &Handler{
-		textService:       ts,
-		statisticsService: ss,
-		templates:         templates,
+		textService:       textService,
+		statisticsService: statisticsQueryService,
+		textQueryService:  textQueryService,
 	}
 }
 
-func (h *Handler) Index(w http.ResponseWriter, _ *http.Request) {
-	err := h.templates.ExecuteTemplate(w, "index.html", map[string]interface{}{
+func (h *Handler) CreateForm(w http.ResponseWriter, _ *http.Request) {
+	tmpl, err := template.ParseFiles("./data/html/base.html", "./data/html/input.html")
+	err = tmpl.Execute(w, map[string]interface{}{
 		"Title": "Главная",
 	})
 	if err != nil {
@@ -41,13 +42,29 @@ func (h *Handler) ProcessText(w http.ResponseWriter, r *http.Request) {
 
 	text := r.FormValue("text")
 
-	textID, err := h.textService.Add(text)
+	_, err := h.textService.Add(text)
 	if err != nil {
 		http.Error(w, "Failed to process text"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	summary, err := h.statisticsService.GetSummary(textID)
+	h.listImpl(w)
+}
+
+func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	id, err := uuid.FromString(idStr)
+	if err != nil {
+		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
+		return
+	}
+
+	summary, err := h.statisticsService.GetSummary(id)
 	if err != nil {
 		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
 		return
@@ -66,14 +83,64 @@ func (h *Handler) ProcessText(w http.ResponseWriter, r *http.Request) {
 		Similarity int
 	}{
 		Title:      "Результаты",
-		TextID:     textID,
+		TextID:     id,
 		Rank:       rank,
 		Similarity: similarity,
 	}
 
-	err = h.templates.ExecuteTemplate(w, "baseSummary.html", data)
+	tmpl, err := template.ParseFiles("./data/html/base.html", "./data/html/summary.html")
 	if err != nil {
 		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := r.FormValue("id")
+	id, err := uuid.FromString(idStr)
+	if err != nil {
+		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
+		return
+	}
+
+	err = h.textService.Remove(id)
+	if err != nil {
+		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
+		return
+	}
+
+	h.listImpl(w)
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	h.listImpl(w)
+}
+
+func (h *Handler) listImpl(w http.ResponseWriter) {
+	texts, err := h.textQueryService.List()
+	if err != nil {
+		http.Error(w, "Ошибка при получении списка текстов", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.ParseFiles("./data/html/list.html")
+	if err != nil {
+		http.Error(w, "Ошибка при загрузке шаблона", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, struct {
+		Texts []query.TextData
+	}{
+		Texts: texts,
+	})
+	if err != nil {
+		http.Error(w, "Ошибка при отображении шаблона", http.StatusInternalServerError)
 		return
 	}
 }

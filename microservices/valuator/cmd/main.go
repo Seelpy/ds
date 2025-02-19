@@ -1,27 +1,30 @@
 package main
 
 import (
+	"github.com/redis/go-redis/v9"
 	"net/http"
 	"valuator/package/app/query"
 	"valuator/package/app/service"
 	"valuator/package/infra/api"
 	"valuator/package/infra/redis/repo"
-
-	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	// Инициализация клиента Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr: "redis:6379",
 	})
 
 	textRepo := repo.NewTextRepository(rdb)
-	ts := service.NewTextService(textRepo)
-	ss := query.NewStatisticsQueryService(textRepo)
-	handler := api.NewHandler(ts, ss)
+	textService := service.NewTextService(textRepo)
+	statisticsQueryService := query.NewStatisticsQueryService(textRepo)
+	textQueryService := query.NewTextQueryService(textRepo)
+	handler := api.NewHandler(textService, statisticsQueryService, textQueryService)
 
-	http.HandleFunc("/", handler.Index)
+	http.HandleFunc("/create/form", handler.CreateForm)
 	http.HandleFunc("/process", handler.ProcessText)
+	http.HandleFunc("/statics", handler.Statistics)
+	http.HandleFunc("/delete", handler.Delete)
+	http.HandleFunc("/list", handler.List)
+	http.HandleFunc("/", handler.List)
 	http.ListenAndServe(":8082", nil)
 }

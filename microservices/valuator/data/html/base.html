@@ -19,12 +19,26 @@
         h1 {
             color: #333;
         }
+        .btn {
+            background-color: #2ecc40;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            background-color: #29b739;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Valuator - помощник редактора</h1>
-    {{template "summary" .}}
+    {{template "content" .}}
 </div>
 </body>
 </html>
