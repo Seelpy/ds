@@ -26,6 +26,7 @@ WORKDIR /app
 # Копируем необходимые файлы из билд-образа
 COPY --from=builder /app/bin/main ./bin/main
 COPY --from=builder /app/vendor ./vendor
+COPY --from=builder /app/data ./data
 
 # Экспортируем порт
 EXPOSE 8082
