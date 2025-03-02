@@ -70,7 +70,7 @@ func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rank := float64(summary.SymbolStatistics.AlphabetCount) / float64(summary.SymbolStatistics.AllCount)
+	rank := 1 - (float64(summary.SymbolStatistics.AlphabetCount) / float64(summary.SymbolStatistics.AllCount))
 	similarity := 0
 	if summary.UniqueStatistics.IsDuplicate {
 		similarity = 1

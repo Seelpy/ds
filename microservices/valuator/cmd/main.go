@@ -7,6 +7,7 @@ import (
 	"valuator/package/app/service"
 	"valuator/package/infra/api"
 	"valuator/package/infra/redis/repo"
+	"valuator/package/infra/redis/unique"
 )
 
 func main() {
@@ -15,9 +16,11 @@ func main() {
 	})
 
 	textRepo := repo.NewTextRepository(rdb)
-	textService := service.NewTextService(textRepo)
-	statisticsQueryService := query.NewStatisticsQueryService(textRepo)
+	uniqueCounter := unique.NewUniqueCounter(rdb)
+	textService := service.NewTextService(textRepo, uniqueCounter)
+	statisticsQueryService := query.NewStatisticsQueryService(textRepo, uniqueCounter)
 	textQueryService := query.NewTextQueryService(textRepo)
+
 	handler := api.NewHandler(textService, statisticsQueryService, textQueryService)
 
 	http.HandleFunc("/create/form", handler.CreateForm)

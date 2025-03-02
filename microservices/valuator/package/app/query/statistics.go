@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"unicode/utf8"
 	"valuator/package/app/model"
+	"valuator/package/app/unique"
 )
 
 const (
@@ -22,9 +23,10 @@ type StatisticsQueryService interface {
 	GetSummary(textID uuid.UUID) (TextStatistics, error)
 }
 
-func NewStatisticsQueryService(repo model.TextReadRepository) StatisticsQueryService {
+func NewStatisticsQueryService(repo model.TextReadRepository, counter unique.ReadOnlyTextCounter) StatisticsQueryService {
 	return &statisticsQueryService{
-		repo: repo,
+		repo:    repo,
+		counter: counter,
 	}
 }
 
@@ -43,7 +45,8 @@ type UniqueStatistics struct {
 }
 
 type statisticsQueryService struct {
-	repo model.TextReadRepository
+	repo    model.TextReadRepository
+	counter unique.ReadOnlyTextCounter
 }
 
 func (s *statisticsQueryService) GetSummary(textID uuid.UUID) (TextStatistics, error) {
@@ -54,14 +57,14 @@ func (s *statisticsQueryService) GetSummary(textID uuid.UUID) (TextStatistics, e
 	if text.IsEmpty() {
 		return TextStatistics{}, model.ErrTextNotFound
 	}
-	all, err := s.repo.ListAll()
+	uniqueStat, err := s.UniqueStatistic(text.Value())
 	if err != nil {
 		return TextStatistics{}, err
 	}
 
 	return TextStatistics{
 		SymbolStatistics: s.SymbolStatistics(text.Value()),
-		UniqueStatistics: s.UniqueStatistic(text.Value(), all),
+		UniqueStatistics: uniqueStat,
 	}, nil
 }
 
@@ -85,20 +88,14 @@ func (s *statisticsQueryService) SymbolStatistics(text model.Text) SymbolStatist
 	}
 }
 
-func (s *statisticsQueryService) UniqueStatistic(text model.Text, texts []model.Text) UniqueStatistics {
-	for _, otherText := range texts {
-		if otherText.ID() == text.ID() {
-			continue
-		}
-		if otherText.Value() == text.Value() {
-			return UniqueStatistics{
-				IsDuplicate: true,
-			}
-		}
+func (s *statisticsQueryService) UniqueStatistic(text model.Text) (UniqueStatistics, error) {
+	count, err := s.counter.GetCount(text.Value())
+	if err != nil {
+		return UniqueStatistics{}, err
 	}
 	return UniqueStatistics{
-		IsDuplicate: false,
-	}
+		IsDuplicate: count > 1,
+	}, nil
 }
 
 func generateAlphabetMap() map[rune]bool {
