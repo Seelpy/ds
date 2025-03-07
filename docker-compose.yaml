@@ -21,12 +21,12 @@ services:
     depends_on:
       - redis
 
-  ingress:
+  nginx:
     image: nginx:alpine
-    container_name: ingress
+    container_name: nginx
     restart: always
     volumes:
-      - ./microservices/ingress/nginx.conf:/etc/nginx/nginx.conf
+      - ./microservices/nginx/nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "127.0.0.1:8082:8082"
       - "127.0.0.1:8081:8081"
