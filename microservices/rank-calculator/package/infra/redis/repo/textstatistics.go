@@ -1,0 +1,43 @@
+package repo
+
+import (
+	"context"
+	"github.com/gofrs/uuid"
+	"github.com/redis/go-redis/v9"
+	"rankcalculator/package/app/model"
+	"rankcalculator/package/infra/redis/keyvalue"
+)
+
+const (
+	keyPrefix = "text-statistics:"
+)
+
+func NewTextRepository(client *redis.Client) model.TextStatisticsRepository {
+	return &textStatisticsRepository{
+		storage: keyvalue.NewStorage[textSerializable](client),
+	}
+}
+
+type textSerializable struct {
+	TextID           string `json:"text_id"`
+	IsDuplicate      bool   `json:"is_duplicate"`
+	AllAlphabetCount int    `json:"all_alphabet_count"`
+	AllCount         int    `json:"all_count"`
+}
+
+type textStatisticsRepository struct {
+	storage keyvalue.Storage[textSerializable]
+}
+
+func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) error {
+	return r.storage.Set(context.Background(), keyPrefix+textStatistics.TextID.String(), textSerializable{
+		TextID:           textStatistics.TextID.String(),
+		IsDuplicate:      textStatistics.IsDuplicate,
+		AllAlphabetCount: textStatistics.AllAlphabetCount,
+		AllCount:         textStatistics.AllCount,
+	}, 0)
+}
+
+func (r *textStatisticsRepository) Remove(textID uuid.UUID) error {
+	return r.storage.Delete(context.Background(), keyPrefix+textID.String())
+}
