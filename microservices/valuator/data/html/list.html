@@ -80,15 +80,15 @@
 <body>
 <h1>Веселов Максим ПС-31</h1>
 <h1>Список текстов для анализа</h1>
-<a href="/create/form">
+<a href="/valuator/create/form">
     <button class="btn">Создать</button>
 </a> {{if .Texts}}
 <ul> {{range .Texts}}
     <li>
-        <form action="/statics" method="post" style="flex-grow: 1; margin-right: 10px;"><input type="hidden" name="id"
+        <form action="/rankcalculator/statics" method="post" style="flex-grow: 1; margin-right: 10px;"><input type="hidden" name="id"
                                                                                                value="{{.ID}}"> <input
                 type="hidden" name="text" value="{{.Value}}"> <input type="submit" value="{{.Value}}"></form>
-        <form action="/delete" method="post"><input type="hidden" name="id" value="{{.ID}}">
+        <form action="/valuator/delete" method="post"><input type="hidden" name="id" value="{{.ID}}">
             <input type="submit"
                                                                                                     value="Удалить"
                                                                                                     class="delete-btn">

@@ -29,16 +29,14 @@ func main() {
 	uniqueCounter := unique.NewUniqueCounter(rdb)
 	natsDispatcher := infranats.NewNatsDispatcher(natsConn)
 	textService := service.NewTextService(textRepo, uniqueCounter, natsDispatcher)
-	statisticsQueryService := query.NewStatisticsQueryService(textRepo, uniqueCounter)
 	textQueryService := query.NewTextQueryService(textRepo)
 
-	handler := api.NewHandler(textService, statisticsQueryService, textQueryService)
+	handler := api.NewHandler(textService, textQueryService)
 
-	http.HandleFunc("/create/form", handler.CreateForm)
-	http.HandleFunc("/process", handler.ProcessText)
-	http.HandleFunc("/statics", handler.Statistics)
-	http.HandleFunc("/delete", handler.Delete)
-	http.HandleFunc("/list", handler.List)
-	http.HandleFunc("/", handler.List)
+	http.HandleFunc("/valuator/create/form", handler.CreateForm)
+	http.HandleFunc("/valuator/process", handler.ProcessText)
+	http.HandleFunc("/valuator/delete", handler.Delete)
+	http.HandleFunc("/valuator/list", handler.List)
+	http.HandleFunc("/valuator/", handler.List)
 	http.ListenAndServe(":8082", nil)
 }

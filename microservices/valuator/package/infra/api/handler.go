@@ -3,23 +3,21 @@ package api
 import (
 	"github.com/gofrs/uuid"
 	"html/template"
+	"log"
 	"net/http"
 	"valuator/package/app/query"
 	"valuator/package/app/service"
 )
 
 type Handler struct {
-	textService       service.TextService
-	statisticsService query.StatisticsQueryService
-	textQueryService  query.TextQueryService
+	textService      service.TextService
+	textQueryService query.TextQueryService
 }
 
-func NewHandler(textService service.TextService, statisticsQueryService query.StatisticsQueryService, textQueryService query.TextQueryService) *Handler {
-
+func NewHandler(textService service.TextService, textQueryService query.TextQueryService) *Handler {
 	return &Handler{
-		textService:       textService,
-		statisticsService: statisticsQueryService,
-		textQueryService:  textQueryService,
+		textService:      textService,
+		textQueryService: textQueryService,
 	}
 }
 
@@ -51,55 +49,6 @@ func (h *Handler) ProcessText(w http.ResponseWriter, r *http.Request) {
 	h.listImpl(w)
 }
 
-func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	idStr := r.FormValue("id")
-	id, err := uuid.FromString(idStr)
-	if err != nil {
-		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
-		return
-	}
-
-	summary, err := h.statisticsService.GetSummary(id)
-	if err != nil {
-		http.Error(w, "Failed to get summary", http.StatusInternalServerError)
-		return
-	}
-
-	rank := 1 - (float64(summary.SymbolStatistics.AlphabetCount) / float64(summary.SymbolStatistics.AllCount))
-	similarity := 0
-	if summary.UniqueStatistics.IsDuplicate {
-		similarity = 1
-	}
-
-	data := struct {
-		Title      string
-		TextID     uuid.UUID
-		Rank       float64
-		Similarity int
-	}{
-		Title:      "Результаты",
-		TextID:     id,
-		Rank:       rank,
-		Similarity: similarity,
-	}
-
-	tmpl, err := template.ParseFiles("./data/html/base.html", "./data/html/summary.html")
-	if err != nil {
-		http.Error(w, "server error", http.StatusInternalServerError)
-		return
-	}
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, "server error", http.StatusInternalServerError)
-		return
-	}
-}
-
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := r.FormValue("id")
 	id, err := uuid.FromString(idStr)
@@ -118,6 +67,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	log.Println("HANDLE1")
 	h.listImpl(w)
 }
 

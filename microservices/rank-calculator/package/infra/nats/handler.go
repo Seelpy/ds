@@ -22,7 +22,8 @@ func NewNATSHandler(natsConn *nats.Conn, commandHandler *command.Handler) *NATSH
 }
 
 func (h *NATSHandler) Start() error {
-	_, err := h.natsConn.Subscribe("command.calculate", func(msg *nats.Msg) {
+	// Подписываемся на топик command.calculate с использованием queue group
+	_, err := h.natsConn.QueueSubscribe("command.calculate", "rankcalculator_queue", func(msg *nats.Msg) {
 		log.Println("start handle command.calculate")
 		var cmd command.CalculateCommand
 		if err := json.Unmarshal(msg.Data, &cmd); err != nil {
@@ -35,10 +36,11 @@ func (h *NATSHandler) Start() error {
 		log.Println("finish handle command.calculate")
 	})
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to commands.calculate: %v", err)
+		return fmt.Errorf("failed to subscribe to command.calculate: %v", err)
 	}
 
-	_, err = h.natsConn.Subscribe("command.remove", func(msg *nats.Msg) {
+	// Подписываемся на топик command.remove с использованием queue group
+	_, err = h.natsConn.QueueSubscribe("command.remove", "rankcalculator_queue", func(msg *nats.Msg) {
 		log.Println("start handle command.remove")
 		var cmd command.RemoveCommand
 		if err := json.Unmarshal(msg.Data, &cmd); err != nil {
@@ -51,7 +53,7 @@ func (h *NATSHandler) Start() error {
 		log.Println("finish handle command.remove")
 	})
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to commands.remove: %v", err)
+		return fmt.Errorf("failed to subscribe to command.remove: %v", err)
 	}
 
 	return nil

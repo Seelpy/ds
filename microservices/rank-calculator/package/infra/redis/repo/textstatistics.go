@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/redis/go-redis/v9"
 	"rankcalculator/package/app/model"
@@ -27,6 +28,23 @@ type textSerializable struct {
 
 type textStatisticsRepository struct {
 	storage keyvalue.Storage[textSerializable]
+}
+
+func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, error) {
+	v, err := r.storage.Get(context.Background(), keyPrefix+uuid.UUID(id).String())
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return model.TextStatistics{}, model.ErrStatisticsNotFound
+		}
+		return model.TextStatistics{}, err
+	}
+
+	return model.TextStatistics{
+		TextID:           id,
+		AllAlphabetCount: v.AllAlphabetCount,
+		AllCount:         v.AllCount,
+		IsDuplicate:      v.IsDuplicate,
+	}, nil
 }
 
 func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) error {
