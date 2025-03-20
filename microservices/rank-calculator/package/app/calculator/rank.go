@@ -30,8 +30,8 @@ func (c *RankCalculator) Calculate(id uuid.UUID) (TextStatistics, error) {
 
 	return TextStatistics{
 		TextID:        uuid.UUID{},
-		AlphabetCount: 0,
-		AllCount:      0,
+		AlphabetCount: 10,
+		AllCount:      20,
 		IsDuplicate:   false,
 	}, nil
 }

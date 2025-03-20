@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/gofrs/uuid"
+	"valuator/package/app/command"
 	"valuator/package/app/model"
 	"valuator/package/app/unique"
 )
@@ -11,13 +12,14 @@ type TextService interface {
 	Remove(id uuid.UUID) error
 }
 
-func NewTextService(repo model.TextRepository, counter unique.TextCounter) TextService {
-	return &textService{repo: repo, counter: counter}
+func NewTextService(repo model.TextRepository, counter unique.TextCounter, dispatcher command.Dispatcher) TextService {
+	return &textService{repo: repo, counter: counter, dispatcher: dispatcher}
 }
 
 type textService struct {
-	repo    model.TextRepository
-	counter unique.TextCounter
+	repo       model.TextRepository
+	counter    unique.TextCounter
+	dispatcher command.Dispatcher
 }
 
 func (s *textService) Add(value string) (uuid.UUID, error) {
@@ -26,11 +28,9 @@ func (s *textService) Add(value string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	err = s.counter.Inc(text.Value())
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-	return uuid.UUID(text.ID()), nil
+	textID := uuid.UUID(text.ID())
+	err = s.dispatcher.Publish(command.NewCalculateCommand(textID))
+	return textID, err
 }
 
 func (s *textService) Remove(id uuid.UUID) error {
@@ -43,10 +43,6 @@ func (s *textService) Remove(id uuid.UUID) error {
 		if err != nil {
 			return err
 		}
-		err = s.counter.Dec(text.Value().Value())
-		if err != nil {
-			return err
-		}
 	}
-	return nil
+	return s.dispatcher.Publish(command.NewRemoveCommand(id))
 }

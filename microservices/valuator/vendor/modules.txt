@@ -7,9 +7,24 @@ github.com/dgryski/go-rendezvous
 # github.com/gofrs/uuid v1.0.0
 ## explicit
 github.com/gofrs/uuid
+# github.com/klauspost/compress v1.17.9
+## explicit; go 1.20
+github.com/klauspost/compress/flate
 # github.com/mono83/maybe v1.0.0
 ## explicit; go 1.18
 github.com/mono83/maybe
+# github.com/nats-io/nats.go v1.39.1
+## explicit; go 1.22.0
+github.com/nats-io/nats.go
+github.com/nats-io/nats.go/encoders/builtin
+github.com/nats-io/nats.go/internal/parser
+github.com/nats-io/nats.go/util
+# github.com/nats-io/nkeys v0.4.9
+## explicit; go 1.20
+github.com/nats-io/nkeys
+# github.com/nats-io/nuid v1.0.1
+## explicit
+github.com/nats-io/nuid
 # github.com/redis/go-redis/v9 v9.7.0
 ## explicit; go 1.18
 github.com/redis/go-redis/v9
@@ -20,3 +35,15 @@ github.com/redis/go-redis/v9/internal/pool
 github.com/redis/go-redis/v9/internal/proto
 github.com/redis/go-redis/v9/internal/rand
 github.com/redis/go-redis/v9/internal/util
+# golang.org/x/crypto v0.31.0
+## explicit; go 1.20
+golang.org/x/crypto/blake2b
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
+golang.org/x/crypto/nacl/box
+golang.org/x/crypto/nacl/secretbox
+golang.org/x/crypto/salsa20/salsa
+# golang.org/x/sys v0.28.0
+## explicit; go 1.18
+golang.org/x/sys/cpu

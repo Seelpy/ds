@@ -6,7 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/redis/go-redis/v9"
 	"rankcalculator/package/app/provider"
-	"rankcalculator/package/infra/keyvalue"
+	"rankcalculator/package/infra/redis/keyvalue"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"rankcalculator/package/app/service"
 )
 
-func NewHandler(service service.StatisticsService) Handler {
-	return Handler{
+func NewHandler(service service.StatisticsService) *Handler {
+	return &Handler{
 		calculateCommandHandler: handler.NewCalculateTextStatisticsCommandHandler(service),
 		removeCommandHandler:    handler.NewRemoveTextStatisticsCommandHandler(service),
 	}
@@ -20,9 +20,9 @@ type Handler struct {
 func (h *Handler) Handle(command Command) error {
 	switch command.Type() {
 	case CalculateCommandType:
-		return h.calculateCommandHandler.Handle(command.TextID())
+		return h.calculateCommandHandler.Handle(command.GetTextID())
 	case RemoveCommandType:
-		return h.removeCommandHandler.Handle(command.TextID())
+		return h.removeCommandHandler.Handle(command.GetTextID())
 	}
 	return nil
 }

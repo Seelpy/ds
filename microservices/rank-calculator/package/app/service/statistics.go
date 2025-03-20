@@ -6,8 +6,11 @@ import (
 	"rankcalculator/package/app/model"
 )
 
-func NewStatisticsService() StatisticsService {
-	return StatisticsService{}
+func NewStatisticsService(repo model.TextStatisticsRepository, calculator calculator.RankCalculator) StatisticsService {
+	return StatisticsService{
+		repo:       repo,
+		calculator: calculator,
+	}
 }
 
 type StatisticsService struct {

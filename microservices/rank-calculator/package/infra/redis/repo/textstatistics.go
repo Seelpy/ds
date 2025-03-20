@@ -12,7 +12,7 @@ const (
 	keyPrefix = "text-statistics:"
 )
 
-func NewTextRepository(client *redis.Client) model.TextStatisticsRepository {
+func NewTextStatisticsRepository(client *redis.Client) model.TextStatisticsRepository {
 	return &textStatisticsRepository{
 		storage: keyvalue.NewStorage[textSerializable](client),
 	}
