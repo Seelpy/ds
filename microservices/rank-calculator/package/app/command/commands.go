@@ -14,6 +14,7 @@ const (
 type Command interface {
 	Type() CommandType
 	GetTextID() uuid.UUID
+	GetTextValue() string
 }
 
 type CalculateCommand struct {
@@ -28,8 +29,13 @@ func (c *CalculateCommand) GetTextID() uuid.UUID {
 	return c.TextID
 }
 
+func (c *CalculateCommand) GetTextValue() string {
+	return ""
+}
+
 type RemoveCommand struct {
-	TextID uuid.UUID `json:"textID"`
+	TextID    uuid.UUID `json:"textID"`
+	TextValue string    `json:"textValue"`
 }
 
 func (c *RemoveCommand) Type() CommandType {
@@ -38,4 +44,8 @@ func (c *RemoveCommand) Type() CommandType {
 
 func (c *RemoveCommand) GetTextID() uuid.UUID {
 	return c.TextID
+}
+
+func (c *RemoveCommand) GetTextValue() string {
+	return c.TextValue
 }

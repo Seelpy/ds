@@ -1,10 +1,11 @@
 package unique
 
-type TextUniquenessChecker interface {
-	IsUnique(text string) (bool, error)
+type ReadOnlyTextCounter interface {
+	GetCount(text string) (int, error)
 }
 
-type TextUniquenessStorage interface {
-	TextUniquenessChecker
-	Store(text string) error
+type TextCounter interface {
+	ReadOnlyTextCounter
+	Inc(text string) error
+	Dec(text string) error
 }

@@ -32,12 +32,13 @@ func (c *CalculateCommand) GetTextID() uuid.UUID {
 	return c.TextID
 }
 
-func NewRemoveCommand(TextID uuid.UUID) Command {
-	return &RemoveCommand{TextID: TextID}
+func NewRemoveCommand(textID uuid.UUID, textValue string) Command {
+	return &RemoveCommand{TextID: textID, TextValue: textValue}
 }
 
 type RemoveCommand struct {
-	TextID uuid.UUID `json:"textID"`
+	TextID    uuid.UUID `json:"textID"`
+	TextValue string    `json:"textValue"`
 }
 
 func (c *RemoveCommand) Type() CommandType {

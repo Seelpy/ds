@@ -43,6 +43,7 @@ func (s *textService) Remove(id uuid.UUID) error {
 		if err != nil {
 			return err
 		}
+		return s.dispatcher.Publish(command.NewRemoveCommand(id, text.Value().Value()))
 	}
-	return s.dispatcher.Publish(command.NewRemoveCommand(id))
+	return nil
 }

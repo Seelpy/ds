@@ -20,9 +20,9 @@ type Handler struct {
 func (h *Handler) Handle(command Command) error {
 	switch command.Type() {
 	case CalculateCommandType:
-		return h.calculateCommandHandler.Handle(command.GetTextID())
+		return h.calculateCommandHandler.Handle(command.GetTextID(), command.GetTextValue())
 	case RemoveCommandType:
-		return h.removeCommandHandler.Handle(command.GetTextID())
+		return h.removeCommandHandler.Handle(command.GetTextID(), command.GetTextValue())
 	}
 	return nil
 }

@@ -25,6 +25,17 @@ services:
       - redis
       - nats
 
+  eventlogger:
+    build:
+      context: ./microservices/event-logger
+      dockerfile: Dockerfile
+    networks:
+      - app-network
+    deploy:
+      replicas: 1
+    depends_on:
+      - nats
+
   nginx:
     image: nginx:alpine
     container_name: nginx

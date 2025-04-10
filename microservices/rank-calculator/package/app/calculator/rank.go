@@ -1,37 +1,70 @@
 package calculator
 
 import (
-	"github.com/gofrs/uuid"
-	"rankcalculator/package/app/provider"
+	"rankcalculator/package/app/unique"
+	"unicode/utf8"
+)
+
+const (
+	lowerCaseEnAlphabet = "abcdefghijklmnopqrstuvwxyz"
+	upperCaseEnAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	lowerCaseRuAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+	upperCaseRuAlphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+	alphabet            = lowerCaseEnAlphabet + upperCaseEnAlphabet + lowerCaseRuAlphabet + upperCaseRuAlphabet
+)
+
+var (
+	alphabetMap = generateAlphabetMap()
 )
 
 type TextStatistics struct {
-	TextID        uuid.UUID
 	AlphabetCount int
 	AllCount      int
 	IsDuplicate   bool
 }
 
-func NewRankCalculator(textProvider provider.TextProvider) RankCalculator {
+func NewRankCalculator(textCounter unique.ReadOnlyTextCounter) RankCalculator {
 	return RankCalculator{
-		textProvider: textProvider,
+		textCounter: textCounter,
 	}
 }
 
 type RankCalculator struct {
-	textProvider provider.TextProvider
+	textCounter unique.ReadOnlyTextCounter
 }
 
-func (c *RankCalculator) Calculate(id uuid.UUID) (TextStatistics, error) {
-	_, err := c.textProvider.Get(id)
+func (c *RankCalculator) Calculate(text string) (TextStatistics, error) {
+	count, err := c.textCounter.GetCount(text)
 	if err != nil {
 		return TextStatistics{}, err
 	}
 
+	alphabetSymbolsCount, allCount := c.symbolStatistics(text)
+
 	return TextStatistics{
-		TextID:        uuid.UUID{},
-		AlphabetCount: 10,
-		AllCount:      20,
-		IsDuplicate:   false,
+		AlphabetCount: alphabetSymbolsCount,
+		AllCount:      allCount,
+		IsDuplicate:   count > 0,
 	}, nil
+}
+
+func (c *RankCalculator) symbolStatistics(text string) (alphabetSymbolsCount, allCount int) {
+	for _, sym := range text {
+		allCount++
+		if alphabetMap[sym] {
+			alphabetSymbolsCount++
+		}
+	}
+	return
+}
+
+func generateAlphabetMap() map[rune]bool {
+	result := make(map[rune]bool)
+	tmp := alphabet
+	for len(tmp) > 0 {
+		r, size := utf8.DecodeRuneInString(tmp)
+		tmp = tmp[size:]
+		result[r] = true
+	}
+	return result
 }

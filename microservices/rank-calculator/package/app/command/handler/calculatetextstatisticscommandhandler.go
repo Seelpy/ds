@@ -15,6 +15,6 @@ type calculateTextStatisticsCommandHandler struct {
 	service service.StatisticsService
 }
 
-func (h *calculateTextStatisticsCommandHandler) Handle(textID uuid.UUID) error {
+func (h *calculateTextStatisticsCommandHandler) Handle(textID uuid.UUID, _ string) error {
 	return h.service.RankText(textID)
 }

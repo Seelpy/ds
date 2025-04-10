@@ -13,30 +13,57 @@ const (
 	keyPrefix = "unique:"
 )
 
-func NewUniqueStorage(client *redis.Client) unique.TextUniquenessStorage {
-	return &uniqueStorage{
-		storage: keyvalue.NewStorage[string](client),
+func NewUniqueCounter(client *redis.Client) unique.TextCounter {
+	return &uniqueCounter{
+		storage: keyvalue.NewStorage[countSerializable](client),
 	}
 }
 
-type uniqueStorage struct {
-	storage keyvalue.Storage[string]
+type countSerializable struct {
+	Count int `json:"count"`
 }
 
-func (r *uniqueStorage) IsUnique(text string) (bool, error) {
-	_, err := r.storage.Get(context.Background(), keyPrefix+hash(text))
+type uniqueCounter struct {
+	storage keyvalue.Storage[countSerializable]
+}
+
+func (r *uniqueCounter) GetCount(key string) (int, error) {
+	result, err := r.storage.Get(context.Background(), keyPrefix+hash(key))
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return true, nil
+			return 0, nil
 		}
-		return false, err
+		return 0, err
 	}
-	return true, nil
+	return result.Count, nil
 }
 
-func (r *uniqueStorage) Store(text string) error {
-	keyHash := hash(text)
-	return r.storage.Set(context.Background(), keyPrefix+keyHash, "", 0)
+func (r *uniqueCounter) Dec(key string) error {
+	keyHash := hash(key)
+	result, err := r.storage.Get(context.Background(), keyPrefix+keyHash)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
+		return err
+	}
+	if result.Count > 0 {
+		result.Count = result.Count - 1
+	}
+	return r.storage.Set(context.Background(), keyPrefix+keyHash, result, 0)
+}
+
+func (r *uniqueCounter) Inc(key string) error {
+	keyHash := hash(key)
+	result, err := r.storage.Get(context.Background(), keyPrefix+keyHash)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return r.storage.Set(context.Background(), keyPrefix+keyHash, countSerializable{Count: 1}, 0)
+		}
+		return err
+	}
+	result.Count++
+	return r.storage.Set(context.Background(), keyPrefix+keyHash, result, 0)
 }
 
 func hash(s string) string {

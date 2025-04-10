@@ -12,6 +12,7 @@ import (
 	nats2 "rankcalculator/package/infra/nats"
 	"rankcalculator/package/infra/redis/provider"
 	"rankcalculator/package/infra/redis/repo"
+	"rankcalculator/package/infra/redis/unique"
 )
 
 func main() {
@@ -22,9 +23,10 @@ func main() {
 	log.Println("ASDDSASDDSA")
 
 	textProvider := provider.NewTextProvider(rdb)
-	rankCalculator := calculator.NewRankCalculator(textProvider)
+	counter := unique.NewUniqueCounter(rdb)
+	rankCalculator := calculator.NewRankCalculator(counter)
 	rankRepository := repo.NewTextStatisticsRepository(rdb)
-	rankService := service.NewStatisticsService(rankRepository, rankCalculator)
+	rankService := service.NewStatisticsService(rankRepository, rankCalculator, counter, textProvider)
 
 	natsConn, err := nats.Connect("http://nats:4222")
 	if err != nil {

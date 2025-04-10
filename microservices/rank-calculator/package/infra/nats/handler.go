@@ -22,7 +22,7 @@ func NewNATSHandler(natsConn *nats.Conn, commandHandler *command.Handler) *NATSH
 }
 
 func (h *NATSHandler) Start() error {
-	// Подписываемся на топик command.calculate с использованием queue group
+	// TODO: обработка должна быть excellently once  или at least once
 	_, err := h.natsConn.QueueSubscribe("command.calculate", "rankcalculator_queue", func(msg *nats.Msg) {
 		log.Println("start handle command.calculate")
 		var cmd command.CalculateCommand
@@ -39,7 +39,6 @@ func (h *NATSHandler) Start() error {
 		return fmt.Errorf("failed to subscribe to command.calculate: %v", err)
 	}
 
-	// Подписываемся на топик command.remove с использованием queue group
 	_, err = h.natsConn.QueueSubscribe("command.remove", "rankcalculator_queue", func(msg *nats.Msg) {
 		log.Println("start handle command.remove")
 		var cmd command.RemoveCommand
