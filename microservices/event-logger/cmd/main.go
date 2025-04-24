@@ -25,6 +25,7 @@ func main() {
 
 	log.Println("Подписка на все темы выполнена успешно")
 
-	// Бесконечный цикл для удержания программы
-	select {}
+	var forever chan struct{}
+
+	<-forever
 }

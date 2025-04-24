@@ -29,6 +29,7 @@ services:
     build:
       context: ./microservices/event-logger
       dockerfile: Dockerfile
+    restart: always
     networks:
       - app-network
     deploy:
@@ -78,6 +79,26 @@ services:
       - ./microservices/nats/nats.conf:/etc/nats/nats.conf
     networks:
       - app-network
+
+  centrifugo:
+    image: centrifugo/centrifugo:latest
+    container_name: centrifugo
+    restart: always
+    environment:
+      - CENTRIFUGO_ADMIN_PASSWORD=admin
+      - CENTRIFUGO_ADMIN_SECRET=admin
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./microservices/centrifugo/config.json:/centrifugo/config.json
+    ports:
+      - "8000:8000"
+      - "3000:3000"
 
 networks:
   app-network:

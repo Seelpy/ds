@@ -31,7 +31,7 @@ type textStatisticsRepository struct {
 }
 
 func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, error) {
-	v, err := r.storage.Get(context.Background(), keyPrefix+uuid.UUID(id).String())
+	v, err := r.storage.Get(context.Background(), keyPrefix+id.String())
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return model.TextStatistics{}, model.ErrStatisticsNotFound

@@ -25,16 +25,16 @@ type StatisticsService struct {
 	provider   provider.TextProvider
 }
 
-func (s *StatisticsService) RankText(textID uuid.UUID) error {
+func (s *StatisticsService) RankText(textID uuid.UUID) (provider.TextData, model.TextStatistics, error) {
 	text, err := s.provider.Get(textID)
 	if err != nil {
-		return err
+		return provider.TextData{}, model.TextStatistics{}, err
 	}
 
 	statistics, err := s.calculator.Calculate(text.Value)
 	log.Printf("Afdaksoj%v", statistics)
 	if err != nil {
-		return err
+		return provider.TextData{}, model.TextStatistics{}, err
 	}
 	err = s.repo.Store(model.TextStatistics{
 		TextID:           textID,
@@ -43,9 +43,18 @@ func (s *StatisticsService) RankText(textID uuid.UUID) error {
 		IsDuplicate:      statistics.IsDuplicate,
 	})
 	if err != nil {
-		return err
+		return provider.TextData{}, model.TextStatistics{}, err
 	}
-	return s.counter.Inc(text.Value)
+	err = s.counter.Inc(text.Value)
+	if err != nil {
+		return provider.TextData{}, model.TextStatistics{}, err
+	}
+	stat, err := s.repo.Get(textID)
+	return text, stat, err
+}
+
+func (s *StatisticsService) GetStatistics(textID uuid.UUID) (model.TextStatistics, error) {
+	return s.repo.Get(textID)
 }
 
 func (s *StatisticsService) RemoveStatistics(textID uuid.UUID, textValue string) error {
@@ -54,5 +63,5 @@ func (s *StatisticsService) RemoveStatistics(textID uuid.UUID, textValue string)
 		return err
 	}
 
-	return s.counter.Inc(textValue)
+	return s.counter.Dec(textValue)
 }

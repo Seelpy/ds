@@ -16,6 +16,10 @@ type TextStatistics struct {
 	IsDuplicate      bool
 }
 
+func (t *TextStatistics) Rank() float64 {
+	return 1 - (float64(t.AllAlphabetCount) / float64(t.AllCount))
+}
+
 type ReadOnlyTextStatisticsRepository interface {
 	Get(textID uuid.UUID) (TextStatistics, error)
 }

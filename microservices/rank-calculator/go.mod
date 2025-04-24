@@ -3,6 +3,7 @@ module rankcalculator
 go 1.23
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gofrs/uuid v1.0.0
 	github.com/nats-io/nats.go v1.39.1
 	github.com/redis/go-redis/v9 v9.7.0
@@ -16,5 +17,4 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
 )

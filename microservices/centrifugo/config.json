@@ -13,14 +13,11 @@
   },
   "namespaces": [
     {
-      "name": "results",
-      "history_size": 10,
-      "history_ttl": "300s",
+      "name": "rank",
       "presence": true,
-      "join_leave": true,
-      "subscribe_to_publish": true,
-      "allow_subscribe": true,
-      "allow_publish": true
+      "publish": true,
+      "subscribe": true,
+      "channel_regex": "^rank#[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   ]
 }

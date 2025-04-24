@@ -9,6 +9,7 @@ import (
 	"rankcalculator/package/app/command"
 	"rankcalculator/package/app/service"
 	"rankcalculator/package/infra/api"
+	"rankcalculator/package/infra/centrifugo"
 	nats2 "rankcalculator/package/infra/nats"
 	"rankcalculator/package/infra/redis/provider"
 	"rankcalculator/package/infra/redis/repo"
@@ -28,13 +29,15 @@ func main() {
 	rankRepository := repo.NewTextStatisticsRepository(rdb)
 	rankService := service.NewStatisticsService(rankRepository, rankCalculator, counter, textProvider)
 
+	centrifugoClient := centrifugo.NewCentrifugoClient()
+
 	natsConn, err := nats.Connect("http://nats:4222")
 	if err != nil {
 		log.Fatalf("Failed to connect to NATS: %v", err)
 	}
 	defer natsConn.Close()
 
-	commandHandler := command.NewHandler(rankService)
+	commandHandler := command.NewHandler(rankService, centrifugoClient)
 
 	natsHandler := nats2.NewNATSHandler(natsConn, commandHandler)
 	if err := natsHandler.Start(); err != nil {

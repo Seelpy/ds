@@ -2,11 +2,14 @@ package api
 
 import (
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
 	"html/template"
 	"log"
 	"net/http"
 	"rankcalculator/package/app/model"
+	"rankcalculator/package/app/notification"
+	"time"
 )
 
 func NewHandler(rankRepo model.ReadOnlyTextStatisticsRepository) *Handler {
@@ -33,44 +36,75 @@ func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("./data/html/base.html", "./data/html/summary.html")
+	tmpl, err := template.ParseFiles("./data/html/summary.html")
 	if err != nil {
 		http.Error(w, "server error1"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	statistics, err := h.rankRepo.Get(id)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
 
+	rank, err := h.rankRepo.Get(id)
 	if errors.Is(err, model.ErrStatisticsNotFound) {
+		channel := notification.GenerateChannel(id)
 		data := struct {
-			Title  string
-			TextID uuid.UUID
+			Text            string
+			Rank            float64
+			Similarity      int
+			CentrifugoToken string
+			CentrifugoURL   string
+			Channel         string
+			ProcessingID    string
+			HasResult       bool
 		}{
-			Title:  "Результаты",
-			TextID: id,
+			Text:            "результаты",
+			CentrifugoToken: generateCentrifugoToken(ip, channel),
+			CentrifugoURL:   "ws://localhost:8000/connection/websocket",
+			Channel:         channel,
+			ProcessingID:    id.String(),
 		}
 		err = tmpl.Execute(w, data)
 	} else {
 		similarity := 0
-		if statistics.IsDuplicate {
+		if rank.IsDuplicate {
 			similarity = 1
 		}
 		data := struct {
-			Title      string
-			TextID     uuid.UUID
+			Text       string
 			Rank       float64
 			Similarity int
+			HasResult  bool
 		}{
-			Title:      "Результаты",
-			TextID:     id,
-			Rank:       float64(statistics.AllAlphabetCount) / float64(statistics.AllCount),
+			Text:       "результаты",
+			Rank:       rank.Rank(),
 			Similarity: similarity,
+			HasResult:  true,
 		}
 		err = tmpl.Execute(w, data)
 	}
 
 	if err != nil {
-		http.Error(w, "server error2", http.StatusInternalServerError)
+		http.Error(w, "server error2 "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func generateCentrifugoToken(identifier string, channel string) string {
+	claims := jwt.MapClaims{
+		"sub":      identifier,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"channels": []string{channel},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte("my_secret"))
+	if err != nil {
+		log.Printf("Ошибка генерации токена: %v", err)
+		return ""
+	}
+
+	return signedToken
 }
