@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/redis/go-redis/v9"
 	"rankcalculator/package/app/model"
+	infraredis "rankcalculator/package/infra/redis"
 	"rankcalculator/package/infra/redis/keyvalue"
 )
 
@@ -13,9 +14,9 @@ const (
 	keyPrefix = "text-statistics:"
 )
 
-func NewTextStatisticsRepository(client *redis.Client) model.TextStatisticsRepository {
+func NewTextStatisticsRepository(redisProvider infraredis.Provider) model.TextStatisticsRepository {
 	return &textStatisticsRepository{
-		storage: keyvalue.NewStorage[textSerializable](client),
+		redisProvider: redisProvider,
 	}
 }
 
@@ -27,11 +28,16 @@ type textSerializable struct {
 }
 
 type textStatisticsRepository struct {
-	storage keyvalue.Storage[textSerializable]
+	redisProvider infraredis.Provider
 }
 
 func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, error) {
-	v, err := r.storage.Get(context.Background(), keyPrefix+id.String())
+	redisClient, err := r.redisProvider.GetRedisShard(id)
+	if err != nil {
+		return model.TextStatistics{}, err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	v, err := storage.Get(context.Background(), keyPrefix+id.String())
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return model.TextStatistics{}, model.ErrStatisticsNotFound
@@ -48,7 +54,12 @@ func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, erro
 }
 
 func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) error {
-	return r.storage.Set(context.Background(), keyPrefix+textStatistics.TextID.String(), textSerializable{
+	redisClient, err := r.redisProvider.GetRedisShard(textStatistics.TextID)
+	if err != nil {
+		return err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	return storage.Set(context.Background(), keyPrefix+textStatistics.TextID.String(), textSerializable{
 		TextID:           textStatistics.TextID.String(),
 		IsDuplicate:      textStatistics.IsDuplicate,
 		AllAlphabetCount: textStatistics.AllAlphabetCount,
@@ -57,5 +68,10 @@ func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) er
 }
 
 func (r *textStatisticsRepository) Remove(textID uuid.UUID) error {
-	return r.storage.Delete(context.Background(), keyPrefix+textID.String())
+	redisClient, err := r.redisProvider.GetRedisShard(textID)
+	if err != nil {
+		return err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	return storage.Delete(context.Background(), keyPrefix+textID.String())
 }

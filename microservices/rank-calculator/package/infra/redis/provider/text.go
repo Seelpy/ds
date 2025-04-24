@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/redis/go-redis/v9"
 	"rankcalculator/package/app/provider"
+	infraredis "rankcalculator/package/infra/redis"
 	"rankcalculator/package/infra/redis/keyvalue"
 )
 
@@ -13,9 +14,9 @@ const (
 	keyPrefix = "text:"
 )
 
-func NewTextProvider(client *redis.Client) provider.TextProvider {
+func NewTextProvider(redisProvider infraredis.Provider) provider.TextProvider {
 	return &textProvider{
-		storage: keyvalue.NewStorage[textSerializable](client),
+		redisProvider: redisProvider,
 	}
 }
 
@@ -25,11 +26,16 @@ type textSerializable struct {
 }
 
 type textProvider struct {
-	storage keyvalue.Storage[textSerializable]
+	redisProvider infraredis.Provider
 }
 
 func (r *textProvider) Get(id uuid.UUID) (provider.TextData, error) {
-	v, err := r.storage.Get(context.Background(), keyPrefix+id.String())
+	redisClient, err := r.redisProvider.GetRedisShard(id)
+	if err != nil {
+		return provider.TextData{}, err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	v, err := storage.Get(context.Background(), keyPrefix+id.String())
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return provider.TextData{}, provider.ErrTextNotFound

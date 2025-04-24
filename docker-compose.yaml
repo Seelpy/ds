@@ -37,6 +37,9 @@ services:
       replicas: 2
     depends_on:
       - redis-main
+      - redis-en
+      - redis-ru
+      - redis-asia
       - nats
 
   eventlogger:

@@ -11,22 +11,34 @@ import (
 	"rankcalculator/package/infra/api"
 	"rankcalculator/package/infra/centrifugo"
 	nats2 "rankcalculator/package/infra/nats"
+	infraredis "rankcalculator/package/infra/redis"
 	"rankcalculator/package/infra/redis/provider"
 	"rankcalculator/package/infra/redis/repo"
 	"rankcalculator/package/infra/redis/unique"
 )
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+	mainRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-main:6379",
+	})
+	ruRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-ru:6379",
+	})
+	enRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-en:6379",
+	})
+	asiaRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-asia:6379",
 	})
 
 	log.Println("ASDDSASDDSA")
 
-	textProvider := provider.NewTextProvider(rdb)
-	counter := unique.NewUniqueCounter(rdb)
+	redisProvider := infraredis.NewShardRepository(mainRedisClient, ruRedisClient, enRedisClient, asiaRedisClient)
+
+	textProvider := provider.NewTextProvider(redisProvider)
+	counter := unique.NewUniqueCounter(mainRedisClient)
 	rankCalculator := calculator.NewRankCalculator(counter)
-	rankRepository := repo.NewTextStatisticsRepository(rdb)
+	rankRepository := repo.NewTextStatisticsRepository(redisProvider)
 	rankService := service.NewStatisticsService(rankRepository, rankCalculator, counter, textProvider)
 
 	centrifugoClient := centrifugo.NewCentrifugoClient()
