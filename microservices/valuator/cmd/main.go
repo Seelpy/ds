@@ -9,13 +9,22 @@ import (
 	"valuator/package/app/service"
 	"valuator/package/infra/api"
 	infranats "valuator/package/infra/nats"
+	infraredis "valuator/package/infra/redis"
 	"valuator/package/infra/redis/repo"
-	"valuator/package/infra/redis/unique"
 )
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+	mainRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-main:6379",
+	})
+	ruRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-ru:6379",
+	})
+	enRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-en:6379",
+	})
+	asiaRedisClient := redis.NewClient(&redis.Options{
+		Addr: "redis-asia:6379",
 	})
 	log.Println("ASDDSASDDSA")
 
@@ -25,10 +34,10 @@ func main() {
 	}
 	defer natsConn.Close()
 
-	textRepo := repo.NewTextRepository(rdb)
-	uniqueCounter := unique.NewUniqueCounter(rdb)
+	redisProvider := infraredis.NewShardRepository(mainRedisClient, ruRedisClient, enRedisClient, asiaRedisClient)
+	textRepo := repo.NewTextRepository(redisProvider)
 	natsDispatcher := infranats.NewNatsDispatcher(natsConn)
-	textService := service.NewTextService(textRepo, uniqueCounter, natsDispatcher)
+	textService := service.NewTextService(textRepo, redisProvider, natsDispatcher)
 	textQueryService := query.NewTextQueryService(textRepo)
 
 	handler := api.NewHandler(textService, textQueryService)

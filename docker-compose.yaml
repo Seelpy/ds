@@ -1,5 +1,16 @@
 version: '3.8'
 
+x-redis-common: &redis-common
+  image: redis:latest
+  command: redis-server --appendonly yes
+  healthcheck:
+    test: [ "CMD", "redis-cli", "ping" ]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+  networks:
+    - app-network
+
 services:
   valuator:
     build:
@@ -10,7 +21,10 @@ services:
     deploy:
       replicas: 2
     depends_on:
-      - redis
+      - redis-main
+      - redis-en
+      - redis-ru
+      - redis-asia
       - nats
 
   rankcalculator:
@@ -22,7 +36,7 @@ services:
     deploy:
       replicas: 2
     depends_on:
-      - redis
+      - redis-main
       - nats
 
   eventlogger:
@@ -50,21 +64,29 @@ services:
     depends_on:
       - valuator
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "127.0.0.1:6379:6379"
+  redis-main:
+    <<: *redis-common
+    container_name: redis-main
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - app-network
+
+  redis-ru:
+    <<: *redis-common
+    container_name: redis-ru
+    volumes:
+      - redis_ru_data:/data
+
+  redis-en:
+    <<: *redis-common
+    container_name: redis-en
+    volumes:
+      - redis_en_data:/data
+
+  redis-asia:
+    <<: *redis-common
+    container_name: redis-asia
+    volumes:
+      - redis_asia_data:/data
 
   nats:
     image: nats-streaming:0.16.2
@@ -106,3 +128,6 @@ networks:
 volumes:
   db-data:
   redis_data:
+  redis_ru_data:
+  redis_en_data:
+  redis_asia_data:

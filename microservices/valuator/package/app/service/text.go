@@ -4,31 +4,36 @@ import (
 	"github.com/gofrs/uuid"
 	"valuator/package/app/command"
 	"valuator/package/app/model"
-	"valuator/package/app/unique"
 )
 
 type TextService interface {
-	Add(value string) (uuid.UUID, error)
+	Add(value string, country string) (uuid.UUID, error)
 	Remove(id uuid.UUID) error
 }
 
-func NewTextService(repo model.TextRepository, counter unique.TextCounter, dispatcher command.Dispatcher) TextService {
-	return &textService{repo: repo, counter: counter, dispatcher: dispatcher}
+func NewTextService(repo model.TextRepository, textCountryRepo model.TextCountryRepository, dispatcher command.Dispatcher) TextService {
+	return &textService{repo: repo, textCountryRepo: textCountryRepo, dispatcher: dispatcher}
 }
 
 type textService struct {
-	repo       model.TextRepository
-	counter    unique.TextCounter
-	dispatcher command.Dispatcher
+	repo            model.TextRepository
+	textCountryRepo model.TextCountryRepository
+	dispatcher      command.Dispatcher
 }
 
-func (s *textService) Add(value string) (uuid.UUID, error) {
+func (s *textService) Add(value string, country string) (uuid.UUID, error) {
 	text := s.repo.Create(value)
-	err := s.repo.Store(text)
+	textID := uuid.UUID(text.ID())
+	err := s.textCountryRepo.Store(textID, model.Country(country))
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	textID := uuid.UUID(text.ID())
+
+	err = s.repo.Store(text)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
 	err = s.dispatcher.Publish(command.NewCalculateCommand(textID))
 	return textID, err
 }

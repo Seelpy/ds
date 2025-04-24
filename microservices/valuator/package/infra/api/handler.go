@@ -39,8 +39,9 @@ func (h *Handler) ProcessText(w http.ResponseWriter, r *http.Request) {
 	}
 
 	text := r.FormValue("text")
+	country := r.FormValue("country")
 
-	_, err := h.textService.Add(text)
+	_, err := h.textService.Add(text, country)
 	if err != nil {
 		http.Error(w, "Failed to process text"+err.Error(), http.StatusInternalServerError)
 		return

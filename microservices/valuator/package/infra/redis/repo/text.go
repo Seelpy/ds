@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"valuator/package/app/model"
 	"valuator/package/infra/keyvalue"
+	infraredis "valuator/package/infra/redis"
 )
 
 const (
@@ -15,9 +16,9 @@ const (
 	allQuery  = "text:*"
 )
 
-func NewTextRepository(client *redis.Client) model.TextRepository {
+func NewTextRepository(redisProvider infraredis.Provider) model.TextRepository {
 	return &textRepository{
-		storage: keyvalue.NewStorage[textSerializable](client),
+		redisProvider: redisProvider,
 	}
 }
 
@@ -27,11 +28,16 @@ type textSerializable struct {
 }
 
 type textRepository struct {
-	storage keyvalue.Storage[textSerializable]
+	redisProvider infraredis.Provider
 }
 
 func (r *textRepository) Store(text model.Text) error {
-	return r.storage.Set(context.Background(), keyPrefix+uuid.UUID(text.ID()).String(), textSerializable{
+	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(text.ID()))
+	if err != nil {
+		return err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	return storage.Set(context.Background(), keyPrefix+uuid.UUID(text.ID()).String(), textSerializable{
 		ID:    uuid.UUID(text.ID()).String(),
 		Value: text.Value(),
 	}, 0)
@@ -42,11 +48,21 @@ func (r *textRepository) Create(value string) model.Text {
 }
 
 func (r *textRepository) Remove(text model.Text) error {
-	return r.storage.Delete(context.Background(), keyPrefix+uuid.UUID(text.ID()).String())
+	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(text.ID()))
+	if err != nil {
+		return err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	return storage.Delete(context.Background(), keyPrefix+uuid.UUID(text.ID()).String())
 }
 
 func (r *textRepository) Find(id model.TextID) (maybe.Maybe[model.Text], error) {
-	v, err := r.storage.Get(context.Background(), keyPrefix+uuid.UUID(id).String())
+	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(id))
+	if err != nil {
+		return maybe.Nothing[model.Text](), err
+	}
+	storage := keyvalue.NewStorage[textSerializable](redisClient)
+	v, err := storage.Get(context.Background(), keyPrefix+uuid.UUID(id).String())
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return maybe.Nothing[model.Text](), nil
@@ -62,19 +78,23 @@ func (r *textRepository) Find(id model.TextID) (maybe.Maybe[model.Text], error) 
 }
 
 func (r *textRepository) ListAll() ([]model.Text, error) {
-	vs, err := r.storage.ListAll(context.Background(), allQuery)
-	if err != nil {
-		return nil, err
-	}
-	texts := make([]model.Text, 0, len(vs))
-	for _, v := range vs {
-		textModel, err1 := r.convertToModel(v)
-		if err1 != nil {
-			return nil, err1
+	redisClients := r.redisProvider.ListAllShards()
+	result := make([]model.Text, 0)
+	for _, redisClient := range redisClients {
+		storage := keyvalue.NewStorage[textSerializable](redisClient)
+		vs, err := storage.ListAll(context.Background(), allQuery)
+		if err != nil {
+			return nil, err
 		}
-		texts = append(texts, textModel)
+		for _, v := range vs {
+			textModel, err1 := r.convertToModel(v)
+			if err1 != nil {
+				return nil, err1
+			}
+			result = append(result, textModel)
+		}
 	}
-	return texts, nil
+	return result, nil
 }
 
 func (r *textRepository) convertToModel(text textSerializable) (model.Text, error) {
