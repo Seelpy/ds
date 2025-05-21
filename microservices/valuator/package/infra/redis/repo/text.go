@@ -3,9 +3,11 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/mono83/maybe"
 	"github.com/redis/go-redis/v9"
+	"valuator/package/app/authorization"
 	"valuator/package/app/model"
 	"valuator/package/infra/keyvalue"
 	infraredis "valuator/package/infra/redis"
@@ -23,32 +25,34 @@ func NewTextRepository(redisProvider infraredis.Provider) model.TextRepository {
 }
 
 type textSerializable struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+	Value  string `json:"value"`
 }
 
 type textRepository struct {
 	redisProvider infraredis.Provider
 }
 
-func (r *textRepository) Store(text model.Text) error {
-	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(text.ID()))
+func (r *textRepository) Store(ctx authorization.Context, text model.Text) error {
+	redisClient, err := r.redisProvider.GetRedisShard(ctx)
 	if err != nil {
 		return err
 	}
 	storage := keyvalue.NewStorage[textSerializable](redisClient)
 	return storage.Set(context.Background(), keyPrefix+uuid.UUID(text.ID()).String(), textSerializable{
-		ID:    uuid.UUID(text.ID()).String(),
-		Value: text.Value(),
+		ID:     uuid.UUID(text.ID()).String(),
+		UserID: text.UserID().String(),
+		Value:  text.Value(),
 	}, 0)
 }
 
-func (r *textRepository) Create(value string) model.Text {
-	return model.NewText(value)
+func (r *textRepository) Create(ctx authorization.Context, value string) model.Text {
+	return model.NewText(ctx.UserID(), value)
 }
 
-func (r *textRepository) Remove(text model.Text) error {
-	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(text.ID()))
+func (r *textRepository) Remove(ctx authorization.Context, text model.Text) error {
+	redisClient, err := r.redisProvider.GetRedisShard(ctx)
 	if err != nil {
 		return err
 	}
@@ -56,8 +60,8 @@ func (r *textRepository) Remove(text model.Text) error {
 	return storage.Delete(context.Background(), keyPrefix+uuid.UUID(text.ID()).String())
 }
 
-func (r *textRepository) Find(id model.TextID) (maybe.Maybe[model.Text], error) {
-	redisClient, err := r.redisProvider.GetRedisShard(uuid.UUID(id))
+func (r *textRepository) Find(ctx authorization.Context, id model.TextID) (maybe.Maybe[model.Text], error) {
+	redisClient, err := r.redisProvider.GetRedisShard(ctx)
 	if err != nil {
 		return maybe.Nothing[model.Text](), err
 	}
@@ -102,8 +106,14 @@ func (r *textRepository) convertToModel(text textSerializable) (model.Text, erro
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("SADC: ", text.UserID)
+	userID, err := uuid.FromString(text.UserID)
+	if err != nil {
+		return nil, err
+	}
 	return model.LoadText(
 		model.TextID(id),
+		userID,
 		text.Value,
 	), nil
 }

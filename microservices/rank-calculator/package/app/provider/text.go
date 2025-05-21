@@ -15,5 +15,5 @@ type TextData struct {
 }
 
 type TextProvider interface {
-	Get(id uuid.UUID) (TextData, error)
+	Get(userID uuid.UUID, id uuid.UUID) (TextData, error)
 }

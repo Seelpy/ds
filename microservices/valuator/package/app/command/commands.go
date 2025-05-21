@@ -16,12 +16,13 @@ type Command interface {
 	GetTextID() uuid.UUID
 }
 
-func NewCalculateCommand(TextID uuid.UUID) Command {
-	return &CalculateCommand{TextID: TextID}
+func NewCalculateCommand(TextID uuid.UUID, userID uuid.UUID) Command {
+	return &CalculateCommand{TextID: TextID, UserID: userID}
 }
 
 type CalculateCommand struct {
 	TextID uuid.UUID `json:"textID"`
+	UserID uuid.UUID `json:"userID"`
 }
 
 func (c *CalculateCommand) Type() CommandType {
@@ -32,12 +33,13 @@ func (c *CalculateCommand) GetTextID() uuid.UUID {
 	return c.TextID
 }
 
-func NewRemoveCommand(textID uuid.UUID, textValue string) Command {
-	return &RemoveCommand{TextID: textID, TextValue: textValue}
+func NewRemoveCommand(textID uuid.UUID, textValue string, userID uuid.UUID) Command {
+	return &RemoveCommand{TextID: textID, TextValue: textValue, UserID: userID}
 }
 
 type RemoveCommand struct {
 	TextID    uuid.UUID `json:"textID"`
+	UserID    uuid.UUID `json:"userID"`
 	TextValue string    `json:"textValue"`
 }
 

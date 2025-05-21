@@ -1,11 +1,9 @@
 package redis
 
 import (
-	"context"
-	"github.com/gofrs/uuid"
 	"github.com/redis/go-redis/v9"
+	"valuator/package/app/authorization"
 	"valuator/package/app/model"
-	"valuator/package/infra/keyvalue"
 )
 
 type Region string
@@ -14,10 +12,6 @@ const (
 	ruRegion   Region = "RU"
 	euRegion   Region = "EU"
 	asiaRegion Region = "ASIA"
-)
-
-const (
-	keyPrefix = "shard:"
 )
 
 var countryToRegion = map[model.Country]Region{
@@ -29,13 +23,12 @@ var countryToRegion = map[model.Country]Region{
 }
 
 type Provider interface {
-	GetRedisShard(textID uuid.UUID) (*redis.Client, error)
+	GetRedisShard(ctx authorization.Context) (*redis.Client, error)
 	ListAllShards() []*redis.Client
 }
 
-func NewShardRepository(client, ruClient, euClient, asiaClient *redis.Client) *TextShardRepository {
+func NewShardRepository(_, ruClient, euClient, asiaClient *redis.Client) *TextShardRepository {
 	return &TextShardRepository{
-		storage: keyvalue.NewStorage[Region](client),
 		regionMap: map[Region]*redis.Client{
 			ruRegion:   ruClient,
 			euRegion:   euClient,
@@ -45,24 +38,11 @@ func NewShardRepository(client, ruClient, euClient, asiaClient *redis.Client) *T
 }
 
 type TextShardRepository struct {
-	storage   keyvalue.Storage[Region]
 	regionMap map[Region]*redis.Client
 }
 
-func (r *TextShardRepository) Store(textID uuid.UUID, country model.Country) error {
-	region, ok := countryToRegion[country]
-	if !ok {
-		return model.ErrCountryNotFound
-	}
-	return r.storage.Set(context.Background(), keyPrefix+textID.String(), region, 0)
-}
-
-func (r *TextShardRepository) GetRedisShard(textID uuid.UUID) (*redis.Client, error) {
-	v, err := r.storage.Get(context.Background(), keyPrefix+textID.String())
-	if err != nil {
-		return nil, err
-	}
-	return r.regionMap[v], nil
+func (r *TextShardRepository) GetRedisShard(ctx authorization.Context) (*redis.Client, error) {
+	return r.regionMap[countryToRegion[model.Country(ctx.Country())]], nil
 }
 
 func (r *TextShardRepository) ListAllShards() []*redis.Client {

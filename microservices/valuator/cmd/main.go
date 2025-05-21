@@ -37,16 +37,16 @@ func main() {
 	redisProvider := infraredis.NewShardRepository(mainRedisClient, ruRedisClient, enRedisClient, asiaRedisClient)
 	textRepo := repo.NewTextRepository(redisProvider)
 	natsDispatcher := infranats.NewNatsDispatcher(natsConn)
-	textService := service.NewTextService(textRepo, redisProvider, natsDispatcher)
+	textService := service.NewTextService(textRepo, natsDispatcher)
 	textQueryService := query.NewTextQueryService(textRepo)
 
-	handler := api.NewHandler(textService, textQueryService)
+	handler := api.NewHandler(textService, textQueryService, "secret")
 
-	http.HandleFunc("/valuator/create/form", handler.CreateForm)
+	http.HandleFunc("/valuator/create/form", handler.AuthMiddleware(handler.CreateForm))
 	http.HandleFunc("/valuator/login/form", handler.Login)
-	http.HandleFunc("/valuator/process", handler.ProcessText)
-	http.HandleFunc("/valuator/delete", handler.Delete)
-	http.HandleFunc("/valuator/list", handler.List)
-	http.HandleFunc("/valuator/", handler.List)
+	http.HandleFunc("/valuator/process", handler.AuthMiddleware(handler.ProcessText))
+	http.HandleFunc("/valuator/delete", handler.AuthMiddleware(handler.Delete))
+	http.HandleFunc("/valuator/list", handler.AuthMiddleware(handler.List))
+	http.HandleFunc("/valuator/", handler.AuthMiddleware(handler.List))
 	http.ListenAndServe(":8082", nil)
 }

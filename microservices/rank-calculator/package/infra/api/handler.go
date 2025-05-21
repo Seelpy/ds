@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
@@ -12,20 +13,33 @@ import (
 	"time"
 )
 
-func NewHandler(rankRepo model.ReadOnlyTextStatisticsRepository) *Handler {
+const (
+	userIDKey      = "user_id_key"
+	userCountryKey = "user_country_key"
+)
+
+func NewHandler(rankRepo model.ReadOnlyTextStatisticsRepository, secret string) *Handler {
 	return &Handler{
 		rankRepo: rankRepo,
+		secret:   secret,
 	}
 }
 
 type Handler struct {
 	rankRepo model.ReadOnlyTextStatisticsRepository
+	secret   string
 }
 
 func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
-	log.Println("HANDLE")
+	log.Println("HAaSDSADE1")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := parseContext(w, r)
+	log.Println("HAaSDSADE2", ok)
+	if !ok {
 		return
 	}
 
@@ -47,7 +61,7 @@ func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
 		ip = r.RemoteAddr
 	}
 
-	rank, err := h.rankRepo.Get(id)
+	rank, err := h.rankRepo.Get(userID, id)
 	if errors.Is(err, model.ErrStatisticsNotFound) {
 		channel := notification.GenerateChannel(id)
 		data := struct {
@@ -92,6 +106,17 @@ func (h *Handler) Statistics(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func parseContext(w http.ResponseWriter, r *http.Request) (userID uuid.UUID, ok bool) {
+	ctx := r.Context()
+	userID, err := uuid.FromString(ctx.Value(userIDKey).(string))
+	log.Println("HAaSDSADE3", err)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	return userID, true
+}
+
 func generateCentrifugoToken(identifier string, channel string) string {
 	claims := jwt.MapClaims{
 		"sub":      identifier,
@@ -107,4 +132,18 @@ func generateCentrifugoToken(identifier string, channel string) string {
 	}
 
 	return signedToken
+}
+
+func respondWithError(w http.ResponseWriter, code int, message string) {
+	respondWithJSON(w, code, map[string]string{"error": message})
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(payload)
+}
+
+func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+	return json.NewDecoder(r.Body).Decode(dst)
 }

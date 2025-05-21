@@ -51,7 +51,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	payload := jwt.MapClaims{
 		"sub": user.UserID,
 		"c":   user.Country,
-		"exp": time.Now().Add(time.Minute * 5).Unix(),
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -60,6 +60,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Error generating token")
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+	})
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
 		"token": tokenString,
@@ -107,7 +117,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	newPayload := jwt.MapClaims{
 		"sub": user.UserID,
 		"c":   user.Country,
-		"exp": time.Now().Add(time.Minute * 5).Unix(),
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newPayload)
@@ -116,6 +126,16 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Error generating token")
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    newTokenString,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+	})
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
 		"token": newTokenString,
@@ -150,7 +170,7 @@ func (h *Handler) Registration(w http.ResponseWriter, r *http.Request) {
 	newPayload := jwt.MapClaims{
 		"sub": user.UserID,
 		"c":   user.Country,
-		"exp": time.Now().Add(time.Minute * 5).Unix(),
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newPayload)
@@ -159,6 +179,16 @@ func (h *Handler) Registration(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Error generating token")
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    newTokenString,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+	})
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
 		"token": newTokenString,

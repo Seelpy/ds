@@ -31,8 +31,8 @@ type textStatisticsRepository struct {
 	redisProvider infraredis.Provider
 }
 
-func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, error) {
-	redisClient, err := r.redisProvider.GetRedisShard(id)
+func (r *textStatisticsRepository) Get(userID uuid.UUID, id uuid.UUID) (model.TextStatistics, error) {
+	redisClient, err := r.redisProvider.GetRedisShard(userID)
 	if err != nil {
 		return model.TextStatistics{}, err
 	}
@@ -53,8 +53,8 @@ func (r *textStatisticsRepository) Get(id uuid.UUID) (model.TextStatistics, erro
 	}, nil
 }
 
-func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) error {
-	redisClient, err := r.redisProvider.GetRedisShard(textStatistics.TextID)
+func (r *textStatisticsRepository) Store(userID uuid.UUID, textStatistics model.TextStatistics) error {
+	redisClient, err := r.redisProvider.GetRedisShard(userID)
 	if err != nil {
 		return err
 	}
@@ -67,8 +67,8 @@ func (r *textStatisticsRepository) Store(textStatistics model.TextStatistics) er
 	}, 0)
 }
 
-func (r *textStatisticsRepository) Remove(textID uuid.UUID) error {
-	redisClient, err := r.redisProvider.GetRedisShard(textID)
+func (r *textStatisticsRepository) Remove(userID uuid.UUID, textID uuid.UUID) error {
+	redisClient, err := r.redisProvider.GetRedisShard(userID)
 	if err != nil {
 		return err
 	}

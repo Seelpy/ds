@@ -19,12 +19,12 @@ type calculateTextStatisticsCommandHandler struct {
 	publisher notification.Publisher
 }
 
-func (h *calculateTextStatisticsCommandHandler) Handle(textID uuid.UUID, _ string) error {
+func (h *calculateTextStatisticsCommandHandler) Handle(userID uuid.UUID, textID uuid.UUID, _ string) error {
 	// Спим чтобы почувстовать задержку
 	delay := 3 * time.Second
 	time.Sleep(delay)
 
-	text, stat, err := h.service.RankText(textID)
+	text, stat, err := h.service.RankText(userID, textID)
 	if err != nil {
 		return err
 	}

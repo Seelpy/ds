@@ -21,11 +21,11 @@ func (t *TextStatistics) Rank() float64 {
 }
 
 type ReadOnlyTextStatisticsRepository interface {
-	Get(textID uuid.UUID) (TextStatistics, error)
+	Get(userID uuid.UUID, textID uuid.UUID) (TextStatistics, error)
 }
 
 type TextStatisticsRepository interface {
 	ReadOnlyTextStatisticsRepository
-	Store(statistics TextStatistics) error
-	Remove(textID uuid.UUID) error
+	Store(userID uuid.UUID, statistics TextStatistics) error
+	Remove(userID uuid.UUID, textID uuid.UUID) error
 }

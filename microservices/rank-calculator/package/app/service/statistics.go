@@ -25,8 +25,8 @@ type StatisticsService struct {
 	provider   provider.TextProvider
 }
 
-func (s *StatisticsService) RankText(textID uuid.UUID) (provider.TextData, model.TextStatistics, error) {
-	text, err := s.provider.Get(textID)
+func (s *StatisticsService) RankText(userID uuid.UUID, textID uuid.UUID) (provider.TextData, model.TextStatistics, error) {
+	text, err := s.provider.Get(userID, textID)
 	if err != nil {
 		return provider.TextData{}, model.TextStatistics{}, err
 	}
@@ -36,7 +36,7 @@ func (s *StatisticsService) RankText(textID uuid.UUID) (provider.TextData, model
 	if err != nil {
 		return provider.TextData{}, model.TextStatistics{}, err
 	}
-	err = s.repo.Store(model.TextStatistics{
+	err = s.repo.Store(userID, model.TextStatistics{
 		TextID:           textID,
 		AllAlphabetCount: statistics.AlphabetCount,
 		AllCount:         statistics.AllCount,
@@ -49,16 +49,16 @@ func (s *StatisticsService) RankText(textID uuid.UUID) (provider.TextData, model
 	if err != nil {
 		return provider.TextData{}, model.TextStatistics{}, err
 	}
-	stat, err := s.repo.Get(textID)
+	stat, err := s.repo.Get(userID, textID)
 	return text, stat, err
 }
 
-func (s *StatisticsService) GetStatistics(textID uuid.UUID) (model.TextStatistics, error) {
-	return s.repo.Get(textID)
+func (s *StatisticsService) GetStatistics(userID uuid.UUID, textID uuid.UUID) (model.TextStatistics, error) {
+	return s.repo.Get(userID, textID)
 }
 
-func (s *StatisticsService) RemoveStatistics(textID uuid.UUID, textValue string) error {
-	err := s.repo.Remove(textID)
+func (s *StatisticsService) RemoveStatistics(userID uuid.UUID, textID uuid.UUID, textValue string) error {
+	err := s.repo.Remove(userID, textID)
 	if err != nil {
 		return err
 	}

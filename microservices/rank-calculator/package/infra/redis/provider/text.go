@@ -29,8 +29,8 @@ type textProvider struct {
 	redisProvider infraredis.Provider
 }
 
-func (r *textProvider) Get(id uuid.UUID) (provider.TextData, error) {
-	redisClient, err := r.redisProvider.GetRedisShard(id)
+func (r *textProvider) Get(userID uuid.UUID, id uuid.UUID) (provider.TextData, error) {
+	redisClient, err := r.redisProvider.GetRedisShard(userID)
 	if err != nil {
 		return provider.TextData{}, err
 	}

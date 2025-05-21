@@ -15,6 +15,6 @@ type removeTextStatisticsCommandHandler struct {
 	service service.StatisticsService
 }
 
-func (h *removeTextStatisticsCommandHandler) Handle(textID uuid.UUID, textValue string) error {
-	return h.service.RemoveStatistics(textID, textValue)
+func (h *removeTextStatisticsCommandHandler) Handle(userID uuid.UUID, textID uuid.UUID, textValue string) error {
+	return h.service.RemoveStatistics(userID, textID, textValue)
 }

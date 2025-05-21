@@ -23,9 +23,9 @@ func (h *Handler) Handle(command Command) error {
 	time.Sleep(5 * time.Second)
 	switch command.Type() {
 	case CalculateCommandType:
-		return h.calculateCommandHandler.Handle(command.GetTextID(), command.GetTextValue())
+		return h.calculateCommandHandler.Handle(command.GetUserID(), command.GetTextID(), command.GetTextValue())
 	case RemoveCommandType:
-		return h.removeCommandHandler.Handle(command.GetTextID(), command.GetTextValue())
+		return h.removeCommandHandler.Handle(command.GetUserID(), command.GetTextID(), command.GetTextValue())
 	}
 	return nil
 }

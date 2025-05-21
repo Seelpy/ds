@@ -57,8 +57,8 @@ func main() {
 	}
 	log.Println("NATS handler is running...")
 
-	handler := api.NewHandler(rankRepository)
-	http.HandleFunc("/rankcalculator/statics", handler.Statistics)
+	handler := api.NewHandler(rankRepository, "secret")
+	http.HandleFunc("/rankcalculator/statics", handler.AuthMiddleware(handler.Statistics))
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)
 	}

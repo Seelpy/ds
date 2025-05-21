@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/gofrs/uuid v1.0.0
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/mono83/maybe v1.0.0
 	github.com/nats-io/nats.go v1.39.1
 	github.com/redis/go-redis/v9 v9.7.0

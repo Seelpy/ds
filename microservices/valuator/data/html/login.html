@@ -283,18 +283,15 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
+            credentials: 'include' // Важно для работы с cookies
         })
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(err => { throw err; });
                 }
+                window.location.href = '/';
                 return response.json();
-            })
-            .then(data => {
-                // Store the token and redirect or update UI
-                localStorage.setItem('authToken', data.token);
-                window.location.href = '/'; // Redirect to home page
             })
             .catch(error => {
                 showError('login-email-error', error.message || 'Неверные учетные данные');
@@ -315,22 +312,15 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
+            credentials: 'include' // Важно для работы с cookies
         })
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(err => { throw err; });
                 }
+                window.location.href = '/';
                 return response.json();
-            })
-            .then(data => {
-                // After successful registration, switch to login tab
-                switchTab('login');
-                // Optionally auto-fill the login form
-                document.getElementById('login-email').value = formData.login;
-                document.getElementById('login-password').value = formData.password;
-                // Show success message
-                alert('Регистрация успешна! Теперь вы можете войти.');
             })
             .catch(error => {
                 showError('register-login-error', error.message || 'Ошибка регистрации');

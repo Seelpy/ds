@@ -2,12 +2,13 @@ package query
 
 import (
 	"github.com/gofrs/uuid"
+	"valuator/package/app/authorization"
 	"valuator/package/app/model"
 )
 
 type TextQueryService interface {
-	List() ([]TextData, error)
-	Get(id uuid.UUID) (TextData, error)
+	List(ctx authorization.Context) ([]TextData, error)
+	Get(ctx authorization.Context, id uuid.UUID) (TextData, error)
 }
 
 func NewTextQueryService(repo model.TextReadRepository) TextQueryService {
@@ -17,15 +18,16 @@ func NewTextQueryService(repo model.TextReadRepository) TextQueryService {
 }
 
 type TextData struct {
-	ID    uuid.UUID
-	Value string
+	ID     uuid.UUID
+	UserID uuid.UUID
+	Value  string
 }
 
 type textQueryService struct {
 	repo model.TextReadRepository
 }
 
-func (s *textQueryService) List() ([]TextData, error) {
+func (s *textQueryService) List(ctx authorization.Context) ([]TextData, error) {
 	texts, err := s.repo.ListAll()
 	if err != nil {
 		return nil, err
@@ -33,16 +35,20 @@ func (s *textQueryService) List() ([]TextData, error) {
 
 	results := make([]TextData, 0, len(texts))
 	for _, text := range texts {
+		if text.UserID() != ctx.UserID() {
+			continue
+		}
 		results = append(results, TextData{
-			ID:    uuid.UUID(text.ID()),
-			Value: text.Value(),
+			ID:     uuid.UUID(text.ID()),
+			UserID: text.UserID(),
+			Value:  text.Value(),
 		})
 	}
 	return results, nil
 }
 
-func (s *textQueryService) Get(id uuid.UUID) (TextData, error) {
-	text, err := s.repo.Find(model.TextID(id))
+func (s *textQueryService) Get(ctx authorization.Context, id uuid.UUID) (TextData, error) {
+	text, err := s.repo.Find(ctx, model.TextID(id))
 	if err != nil {
 		return TextData{}, err
 	}
@@ -52,6 +58,10 @@ func (s *textQueryService) Get(id uuid.UUID) (TextData, error) {
 	}
 
 	textValue := text.Value()
+
+	if textValue.UserID() != ctx.UserID() {
+		return TextData{}, model.ErrTextPermissionDenied
+	}
 
 	return TextData{
 		ID:    uuid.UUID(textValue.ID()),
