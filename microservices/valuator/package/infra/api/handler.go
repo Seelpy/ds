@@ -32,6 +32,15 @@ func (h *Handler) CreateForm(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+func (h *Handler) Login(w http.ResponseWriter, _ *http.Request) {
+	tmpl, err := template.ParseFiles("./data/html/base.html", "./data/html/login.html")
+	err = tmpl.Execute(w, map[string]interface{}{})
+	if err != nil {
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *Handler) ProcessText(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

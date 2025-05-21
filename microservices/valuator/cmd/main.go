@@ -43,6 +43,7 @@ func main() {
 	handler := api.NewHandler(textService, textQueryService)
 
 	http.HandleFunc("/valuator/create/form", handler.CreateForm)
+	http.HandleFunc("/valuator/login/form", handler.Login)
 	http.HandleFunc("/valuator/process", handler.ProcessText)
 	http.HandleFunc("/valuator/delete", handler.Delete)
 	http.HandleFunc("/valuator/list", handler.List)
