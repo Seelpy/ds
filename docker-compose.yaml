@@ -2,7 +2,9 @@ version: '3.8'
 
 x-redis-common: &redis-common
   image: redis:latest
-  command: redis-server --appendonly yes
+  command:
+     - redis-server
+     - --aclfile /usr/local/etc/redis/users.acl
   healthcheck:
     test: [ "CMD", "redis-cli", "ping" ]
     interval: 10s
@@ -20,6 +22,13 @@ services:
       - app-network
     deploy:
       replicas: 2
+    environment:
+      REDIS_MAIN_ADR: "redis-main:6379"
+      REDIS_EN_ADR: "redis-en:6379"
+      REDIS_RU_ADR: "redis-ru:6379"
+      REDIS_ASIA_ADR: "redis-asia:6379"
+      REDIS_USERNAME: "user1"
+      REDIS_PASSWORD: "password1"
     depends_on:
       - redis-main
       - redis-en
@@ -35,6 +44,13 @@ services:
       - app-network
     deploy:
       replicas: 2
+    environment:
+      REDIS_MAIN_ADR: "redis-main:6379"
+      REDIS_EN_ADR: "redis-en:6379"
+      REDIS_RU_ADR: "redis-ru:6379"
+      REDIS_ASIA_ADR: "redis-asia:6379"
+      REDIS_USERNAME: "user1"
+      REDIS_PASSWORD: "password1"
     depends_on:
       - redis-main
       - redis-en
@@ -50,6 +66,13 @@ services:
       - app-network
     deploy:
       replicas: 2
+    environment:
+      REDIS_MAIN_ADR: "redis-main:6379"
+      REDIS_EN_ADR: "redis-en:6379"
+      REDIS_RU_ADR: "redis-ru:6379"
+      REDIS_ASIA_ADR: "redis-asia:6379"
+      REDIS_USERNAME: "user1"
+      REDIS_PASSWORD: "password1"
 
   eventlogger:
     build:
@@ -81,24 +104,28 @@ services:
     container_name: redis-main
     volumes:
       - redis_data:/data
+      - ./microservices/redis/users.acl:/usr/local/etc/redis/users.acl
 
   redis-ru:
     <<: *redis-common
     container_name: redis-ru
     volumes:
       - redis_ru_data:/data
+      - ./microservices/redis/users.acl:/usr/local/etc/redis/users.acl
 
   redis-en:
     <<: *redis-common
     container_name: redis-en
     volumes:
       - redis_en_data:/data
+      - ./microservices/redis/users.acl:/usr/local/etc/redis/users.acl
 
   redis-asia:
     <<: *redis-common
     container_name: redis-asia
     volumes:
       - redis_asia_data:/data
+      - ./microservices/redis/users.acl:/usr/local/etc/redis/users.acl
 
   nats:
     image: nats-streaming:0.16.2

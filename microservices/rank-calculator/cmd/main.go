@@ -5,6 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"net/http"
+	"os"
 	"rankcalculator/package/app/calculator"
 	"rankcalculator/package/app/command"
 	"rankcalculator/package/app/service"
@@ -19,16 +20,24 @@ import (
 
 func main() {
 	mainRedisClient := redis.NewClient(&redis.Options{
-		Addr: "redis-main:6379",
+		Addr:     os.Getenv("REDIS_MAIN_ADR"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		Username: os.Getenv("REDIS_USERNAME"),
 	})
 	ruRedisClient := redis.NewClient(&redis.Options{
-		Addr: "redis-ru:6379",
+		Addr:     os.Getenv("REDIS_RU_ADR"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		Username: os.Getenv("REDIS_USERNAME"),
 	})
 	enRedisClient := redis.NewClient(&redis.Options{
-		Addr: "redis-en:6379",
+		Addr:     os.Getenv("REDIS_EN_ADR"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		Username: os.Getenv("REDIS_USERNAME"),
 	})
 	asiaRedisClient := redis.NewClient(&redis.Options{
-		Addr: "redis-asia:6379",
+		Addr:     os.Getenv("REDIS_ASIA_ADR"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		Username: os.Getenv("REDIS_USERNAME"),
 	})
 
 	log.Println("ASDDSASDDSA")
