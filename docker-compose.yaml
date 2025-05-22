@@ -29,6 +29,9 @@ services:
       REDIS_ASIA_ADR: "redis-asia:6379"
       REDIS_USERNAME: "user1"
       REDIS_PASSWORD: "password1"
+      SECRET: "token_secret"
+      NATS_USERNAME: "myuser"
+      NATS_PASSWORD: "mypassword"
     depends_on:
       - redis-main
       - redis-en
@@ -51,6 +54,9 @@ services:
       REDIS_ASIA_ADR: "redis-asia:6379"
       REDIS_USERNAME: "user1"
       REDIS_PASSWORD: "password1"
+      SECRET: "token_secret"
+      NATS_USERNAME: "myuser"
+      NATS_PASSWORD: "mypassword"
     depends_on:
       - redis-main
       - redis-en
@@ -73,6 +79,7 @@ services:
       REDIS_ASIA_ADR: "redis-asia:6379"
       REDIS_USERNAME: "user1"
       REDIS_PASSWORD: "password1"
+      SECRET: "token_secret"
 
   eventlogger:
     build:
@@ -85,6 +92,9 @@ services:
       replicas: 1
     depends_on:
       - nats
+    environment:
+      NATS_USERNAME: "myuser"
+      NATS_PASSWORD: "mypassword"
 
   nginx:
     image: nginx:alpine

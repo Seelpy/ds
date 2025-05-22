@@ -52,7 +52,7 @@ func main() {
 
 	centrifugoClient := centrifugo.NewCentrifugoClient()
 
-	natsConn, err := nats.Connect("http://nats:4222")
+	natsConn, err := nats.Connect("nats://" + os.Getenv("NATS_USERNAME") + ":" + os.Getenv("NATS_PASSWORD") + "@nats:4222")
 	if err != nil {
 		log.Fatalf("Failed to connect to NATS: %v", err)
 	}
@@ -66,7 +66,7 @@ func main() {
 	}
 	log.Println("NATS handler is running...")
 
-	handler := api.NewHandler(rankRepository, "secret")
+	handler := api.NewHandler(rankRepository, os.Getenv("SECRET"))
 	http.HandleFunc("/rankcalculator/statics", handler.AuthMiddleware(handler.Statistics))
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)

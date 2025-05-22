@@ -37,7 +37,7 @@ func main() {
 	})
 	log.Println("ASDDSASDDSA")
 
-	natsConn, err := nats.Connect("http://nats:4222")
+	natsConn, err := nats.Connect("nats://" + os.Getenv("NATS_USERNAME") + ":" + os.Getenv("NATS_PASSWORD") + "@nats:4222")
 	if err != nil {
 		log.Fatalf("Failed to connect to NATS: %v", err)
 	}
@@ -49,7 +49,7 @@ func main() {
 	textService := service.NewTextService(textRepo, natsDispatcher)
 	textQueryService := query.NewTextQueryService(textRepo)
 
-	handler := api.NewHandler(textService, textQueryService, "secret")
+	handler := api.NewHandler(textService, textQueryService, os.Getenv("SECRET"))
 
 	http.HandleFunc("/valuator/create/form", handler.AuthMiddleware(handler.CreateForm))
 	http.HandleFunc("/valuator/login/form", handler.Login)

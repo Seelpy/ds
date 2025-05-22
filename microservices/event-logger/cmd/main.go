@@ -3,11 +3,13 @@ package main
 import (
 	"github.com/nats-io/nats.go"
 	"log"
+	"os"
 )
 
 func main() {
 	// Подключение к серверу NATS
-	natsConn, err := nats.Connect("nats://nats:4222")
+	natsConn, err := nats.Connect("nats://" + os.Getenv("NATS_USERNAME") + ":" + os.Getenv("NATS_PASSWORD") + "@nats:4222")
+
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к NATS: %v", err)
 	}

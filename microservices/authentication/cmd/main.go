@@ -16,7 +16,7 @@ func main() {
 	})
 	userRepositury := repo.NewUserRepository(mainRedisClient)
 
-	handler := api.NewHandler(userRepositury, "secret")
+	handler := api.NewHandler(userRepositury, os.Getenv("SECRET"))
 	http.HandleFunc("/authentication/login", handler.Login)
 	http.HandleFunc("/authentication/registration", handler.Registration)
 	http.HandleFunc("/authentication/token/refresh", handler.RefreshToken)
