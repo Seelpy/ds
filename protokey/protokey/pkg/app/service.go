@@ -18,6 +18,8 @@ type ProtoKeyService struct {
 
 var (
 	keyPattern           = regexp.MustCompile(`^[a-zA-Z0-9_\-.]{1,1000}$`)
+	minInt32             = -2147483648
+	maxInt32             = 2147483647
 	ErrBadRequest        = errors.New("bad request")
 	ErrCantParseResponse = errors.New("cant parse response")
 )
@@ -29,6 +31,10 @@ func NewProtoKeyService(cmdCh chan Command, respCh chan Response) *ProtoKeyServi
 func (service *ProtoKeyService) Set(key string, value int) error {
 	if !keyPattern.MatchString(key) {
 		return ErrBadRequest
+	}
+	err := service.validateValue(value)
+	if err != nil {
+		return err
 	}
 
 	service.commands <- &SetCommand{Key: key, Value: value}
@@ -72,4 +78,11 @@ func (service *ProtoKeyService) Keys(prefix string) ([]string, error) {
 	}
 
 	return resp.Keys, resp.Err
+}
+
+func (service *ProtoKeyService) validateValue(value int) error {
+	if value < minInt32 || value > maxInt32 {
+		return ErrBadRequest
+	}
+	return nil
 }

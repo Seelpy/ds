@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const serverURL = "http://localhost:8082"
+const serverURL = "http://localhost:8080"
 
 func main() {
 	var rootCmd = &cobra.Command{
