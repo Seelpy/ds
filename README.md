@@ -254,6 +254,12 @@ MBP-Maksim:protocli maksimveselov$ ./main set key 10
 OK
 ```
 
+**Set через protocli с невалидным значением**
+```
+MBP-Maksim:protocli maksimveselov$ ./main set key 123123123123123123
+Error (400): bad request
+```
+
 **Get через protocli**
 ```
 MBP-Maksim:protocli maksimveselov$ ./main get key
@@ -265,5 +271,4 @@ MBP-Maksim:protocli maksimveselov$ ./main get key
 MBP-Maksim:protocli maksimveselov$ ./main keys k
 key1
 key
-MBP-Maksim:protocli maksimveselov$ 
 ```
